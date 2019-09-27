@@ -1,18 +1,29 @@
 const passport = require('passport');
-const login = require('connect-ensure-login');
+const connectEnsureLogin = require('connect-ensure-login');
+const express = require('express');
+const router = express.Router();
 
-module.exports.index = (request, response) => response.send('OAuth 2.0 Server');
+const index = (request, response) => response.send('OAuth 2.0 Server');
 
-module.exports.loginForm = (request, response) => response.render('login');
+const loginForm = (request, response) => response.render('login');
 
-module.exports.login = passport.authenticate('local', { successReturnToOrRedirect: '/', failureRedirect: '/login' });
+const login = passport.authenticate('local', { successReturnToOrRedirect: '/', failureRedirect: '/login' });
 
-module.exports.logout = (request, response) => {
+const logout = (request, response) => {
   request.logout();
   response.redirect('/');
 };
 
-module.exports.account = [
-  login.ensureLoggedIn(),
+const account = [
+    connectEnsureLogin.ensureLoggedIn(),
   (request, response) => response.render('account', { user: request.user }),
 ];
+
+
+router.get('/', index);
+router.get('/login', loginForm);
+router.post('/login', login);
+router.get('/logout', logout);
+router.get('/account', account);
+
+module.exports = router;

@@ -1,6 +1,8 @@
 const passport = require('passport');
+const express = require('express');
+const router = express.Router();
 
-module.exports.info = [
+const info = [
   passport.authenticate('bearer', { session: false }),
   (request, response) => {
     // request.authInfo is set using the `info` argument supplied by
@@ -10,3 +12,7 @@ module.exports.info = [
     response.json({ client_id: request.user.id, name: request.user.name, scope: request.authInfo.scope });
   }
 ];
+
+router.get('/clientinfo', info);
+
+module.exports = router;

@@ -6,7 +6,7 @@ http://localhost:3001/api-docs/ - documentation
 
 address already in use :::3000
 `lsof -wni tcp:3000`
-`kill {id}`
+`kill -9 {id}`
 
 
 Provider / Consumer Walkthrough
@@ -58,5 +58,18 @@ const authConfig: AuthConfig = {
   oidc: false,
   requireHttps: false,
   issuer: 'http://localhost:3001',
-  loginUrl: 'http://localhost:3001/dialog/authorize',
+  loginUrl: 'http://localhost:3001/oauth2/authorize',
 };
+
+// get http://localhost:3001/oauth2/authorize
+// post http://localhost:3001/oauth2/authorize/decision
+// post http://localhost:3001/oauth2/token
+//
+// get http://localhost:3001
+// get post http://localhost:3001/login
+// get http://localhost:3001/logout
+// get http://localhost:3001/account
+//
+// get http://localhost:3001/user/userinfo
+//
+// get http://localhost:3001/client/clientinfo

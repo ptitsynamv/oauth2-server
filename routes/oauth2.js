@@ -3,7 +3,8 @@ const passport = require('passport');
 const login = require('connect-ensure-login');
 const db = require('../db');
 const utils = require('../utilities');
-
+const express = require('express');
+const router = express.Router();
 
 const server = oauth2orize.createServer();
 
@@ -57,11 +58,12 @@ server.grant(oauth2orize.grant.code((client, redirectUri, user, ares, done) => {
 // the application. The application issues a token, which is bound to these
 // values.
 
+// TODO real expires_in
 server.grant(oauth2orize.grant.token((client, user, ares, done) => {
     const token = utils.getUid(256);
     db.accessTokens.save(token, user.id, client.clientId, (error) => {
         if (error) return done(error);
-        return done(null, token);
+        return done(null, token, {expires_in: 14400, state: 'state-mock'});
     });
 }));
 
@@ -80,9 +82,10 @@ server.exchange(oauth2orize.exchange.code((client, code, redirectUri, done) => {
 
         const token = utils.getUid(256);
         db.accessTokens.save(token, authCode.userId, authCode.clientId, (error) => {
+
             if (error) return done(error);
             // Add custom params, e.g. the username
-            let params = { username: authCode.userName };
+            let params = {username: authCode.userName};
             // Call `done(err, accessToken, [refreshToken], [params])` to issue an access token
             return done(null, token, null, params);
         });
@@ -108,6 +111,7 @@ server.exchange(oauth2orize.exchange.password((client, username, password, scope
             // Everything validated, return the token
             const token = utils.getUid(256);
             db.accessTokens.save(token, user.id, client.clientId, (error) => {
+
                 if (error) return done(error);
                 // Call `done(err, accessToken, [refreshToken], [params])`, see oauth2orize.exchange.code
                 return done(null, token);
@@ -155,7 +159,7 @@ server.exchange(oauth2orize.exchange.clientCredentials((client, scope, done) => 
 // authorization). We accomplish that here by routing through `ensureLoggedIn()`
 // first, and rendering the `dialog` view.
 
-module.exports.authorization = [
+const authorization = [
     login.ensureLoggedIn(),
     server.authorization((clientId, redirectUri, done) => {
         db.clients.findByClientId(clientId, (error, client) => {
@@ -181,7 +185,11 @@ module.exports.authorization = [
         });
     }),
     (request, response) => {
-        response.render('dialog', { transactionId: request.oauth2.transactionID, user: request.user, client: request.oauth2.client });
+        response.render('dialog', {
+            transactionId: request.oauth2.transactionID,
+            user: request.user,
+            client: request.oauth2.client
+        });
     },
 ];
 
@@ -192,7 +200,7 @@ module.exports.authorization = [
 // client, the above grant middleware configured above will be invoked to send
 // a response.
 
-module.exports.decision = [
+const decision = [
     login.ensureLoggedIn(),
     server.decision(),
 ];
@@ -205,8 +213,14 @@ module.exports.decision = [
 // exchange middleware will be invoked to handle the request. Clients must
 // authenticate when making requests to this endpoint.
 
-module.exports.token = [
-    passport.authenticate(['basic', 'oauth2-client-password'], { session: false }),
+const token = [
+    passport.authenticate(['basic', 'oauth2-client-password'], {session: false}),
     server.token(),
     server.errorHandler(),
 ];
+
+router.get('/authorize', authorization);
+router.post('/authorize/decision', decision);
+router.post('/token', token);
+
+module.exports = router;
