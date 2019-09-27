@@ -1,0 +1,30 @@
+{
+  "name": "oauth2-server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/ptitsynamv/oauth2-server.git",
+  "author": "ptitsynamv <ptitsynamv@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "server": "node index",
+    "start": "nodemon index"
+  },
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "connect-ensure-login": "^0.1.1",
+    "cors": "^2.8.5",
+    "ejs": "^2.7.1",
+    "express": "^4.17.1",
+    "express-session": "^1.16.2",
+    "morgan": "^1.9.1",
+    "oauth2orize": "^1.11.0",
+    "passport": "^0.4.0",
+    "passport-http": "^0.3.0",
+    "passport-http-bearer": "^1.0.1",
+    "passport-local": "^1.0.0",
+    "passport-oauth2-client-password": "^0.1.2"
+  },
+  "devDependencies": {
+    "nodemon": "^1.19.2"
+  }
+}
