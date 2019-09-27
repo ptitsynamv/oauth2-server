@@ -4,6 +4,7 @@ const login = require('connect-ensure-login');
 const db = require('../db');
 const utils = require('../utilities');
 const express = require('express');
+const keys = require('../config');
 const router = express.Router();
 
 const server = oauth2orize.createServer();
@@ -63,7 +64,7 @@ server.grant(oauth2orize.grant.token((client, user, ares, done) => {
     const token = utils.getUid(256);
     db.accessTokens.save(token, user.id, client.clientId, (error) => {
         if (error) return done(error);
-        return done(null, token, {expires_in: 14400, state: 'state-mock'});
+        return done(null, token, {expires_in: keys.security.tokenLife, state: 'state-mock'});
     });
 }));
 
