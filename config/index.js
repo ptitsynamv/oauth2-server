@@ -9,7 +9,7 @@ if (process.env.NODE_ENV === 'production') {
 module.exports = {
     ...keys,
     security: {
-        tokenLife: 3600,
+        tokenLife: 60 * 60,
         state: 'state-mock',
     },
 };

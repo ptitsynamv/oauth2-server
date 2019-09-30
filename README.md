@@ -71,5 +71,3 @@ const authConfig: AuthConfig = {
 // get http://localhost:3001/account
 //
 // get http://localhost:3001/user/userinfo
-//
-// get http://localhost:3001/client/clientinfo

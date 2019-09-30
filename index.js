@@ -11,7 +11,12 @@ const mongoose = require('mongoose');
 const keys = require('./config');
 
 const app = express();
-mongoose.connect(keys.mongoUrl, {useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true})
+mongoose.connect(keys.mongoUrl, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useCreateIndex: true,
+    useFindAndModify: false,
+})
     .then(() => console.log('mongo db connected'))
     .catch(error => console.log(error));
 
@@ -30,8 +35,6 @@ require('./auth');
 
 app.use('/', routes.site);
 app.use('/oauth2', routes.oauth2);
-app.use('/user', routes.user);
-app.use('/client', routes.client);
 app.use(express.static(__dirname + '/public'));
 
 const port = process.env.PORT || 3001;

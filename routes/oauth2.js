@@ -60,20 +60,28 @@ server.deserializeClient((id, done) => {
 // the application. The application issues a token, which is bound to these
 // values.
 
-// TODO real expires_in
 server.grant(oauth2orize.grant.token((client, user, ares, done) => {
-    console.log(11);
-
     const token = utils.getUid(256);
-    const accessToken = new models.accessToken({
-        token,
-        userId: user.id,
-        clientId: client.clientId,
-    });
-    accessToken.save((error) => {
-        if (error) return done(error);
-        return done(null, token, {expires_in: keys.security.tokenLife, state: keys.security.state});
-    });
+    models.accessToken.findOne(
+        {clientId: client.clientId, userId: user.id},
+        (error, accessToken) => {
+            if (error) return done(error);
+            if (!accessToken) {
+                new models.accessToken({
+                    token,
+                    userId: user.id,
+                    clientId: client.clientId,
+                }).save((error) => {
+                    if (error) return done(error);
+                });
+            } else {
+                accessToken.token = token;
+                accessToken.save((error) => {
+                    if (error) return done(error);
+                });
+            }
+            return done(null, token, {expires_in: keys.security.tokenLife, state: keys.security.state});
+        });
 }));
 
 // Exchange authorization codes for access tokens. The callback accepts the
@@ -232,8 +240,62 @@ const token = [
     server.errorHandler(),
 ];
 
+const expect = {
+    "discoveryDocument": {
+        "issuer": "http://localhost:3001/oauth2",
+        "jwks_uri": "http://localhost:3001/oauth2/.well-known/jwks",
+        "authorization_endpoint": "http://localhost:3001/oauth2/authorize",
+        "token_endpoint": "http://localhost:3001/oauth2/token",
+        "userinfo_endpoint": "http://localhost:3001/oauth2/userinfo",
+        // "end_session_endpoint": "http://localhost:3001/oauth2/identity/connect/endsession",
+        // "check_session_iframe": "http://localhost:3001/oauth2/identity/connect/checksession",
+        // "revocation_endpoint": "http://localhost:3001/oauth2/identity/connect/revocation",
+        "scopes_supported": ["api"],
+        // "claims_supported": ["role", "projects", "buyInBulk", "sub", "name", "family_name", "given_name", "middle_name", "nickname", "preferred_username", "profile", "picture", "website", "gender", "birthdate", "zoneinfo", "locale", "updated_at", "email", "email_verified", "phone_number", "phone_number_verified", "address"],
+        "response_types_supported": ["token", "id_token"],
+        // "response_modes_supported": ["form_post", "query", "fragment"],
+        // "grant_types_supported": ["authorization_code", "client_credentials", "password", "refresh_token", "implicit"],
+        // "subject_types_supported": ["public"],
+        // "id_token_signing_alg_values_supported": ["RS256"],
+        // "token_endpoint_auth_methods_supported": ["client_secret_post", "client_secret_basic"]
+    },
+    "jwks": {
+        "keys": [{
+            "kty": "RSA",
+            "use": "sig",
+            "kid": "KGAhprLdiAK1kRTo3K24SIF59E4",
+            "x5t": "KGAhprLdiAK1kRTo3K24SIF59E4",
+            "e": "AQAB",
+            "n": "mock-n",
+            "x5c": ["mock-x5c"]
+        }]
+    }
+};
+
+const configuration = [
+    (request, response) => response.json(expect.discoveryDocument),
+];
+
+const jwks = [
+    (request, response) => response.json({}),
+];
+
+const info = [
+    passport.authenticate('bearer', {session: false}),
+    (request, response) => {
+        // request.authInfo is set using the `info` argument supplied by
+        // `BearerStrategy`. It is typically used to indicate scope of the token,
+        // and used in access control checks. For illustrative purposes, this
+        // example simply returns the scope in the response.
+        response.json({_id: request.user.id, email: request.user.email});
+    }
+];
+
 router.get('/authorize', authorization);
 router.post('/authorize/decision', decision);
 router.post('/token', token);
+router.get('/.well-known/openid-configuration', configuration);
+router.get('/.well-known/jwks', jwks);
+router.get('/userinfo', info);
 
 module.exports = router;
