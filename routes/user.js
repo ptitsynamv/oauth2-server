@@ -9,10 +9,9 @@ const info = [
         // `BearerStrategy`. It is typically used to indicate scope of the token,
         // and used in access control checks. For illustrative purposes, this
         // example simply returns the scope in the response.
-        response.json({user_id: request.user.id, name: request.user.name, scope: request.authInfo.scope});
+        response.json({_id: request.user.id, email: request.user.email});
     }
 ];
-
 router.get('/userinfo', info);
 
 module.exports = router;

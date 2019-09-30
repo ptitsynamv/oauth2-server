@@ -31,8 +31,8 @@ Below is a mapping of the API in the context of a passport-strategy
 
 * `/dialog/authorize` is the `authorizationURL`.
 * `/oauth/token` is the `tokenURL`
-* `/api/userinfo` is a protected resource that requires user permission
-* `/api/clientinfo` is a protected resource that requires a token generated from the client's id and secret
+* `/user/userinfo` is a protected resource that requires user permission
+* `/client/clientinfo` is a protected resource that requires a token generated from the client's id and secret
 * Usage of `scope` is not demonstrated in this example.
 
 The standalone usable resources are

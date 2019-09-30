@@ -1,14 +1,15 @@
-let index;
+let keys;
 
 if (process.env.NODE_ENV === 'production') {
-    index = require('./keys.prod')
+    keys = require('./keys.prod')
 } else {
-    index = require('./keys.dev')
+    keys = require('./keys.dev')
 }
 
 module.exports = {
-    ...index,
+    ...keys,
     security: {
         tokenLife: 3600,
+        state: 'state-mock',
     },
 };

@@ -6,7 +6,7 @@ const router = express.Router();
 const index = (request, response) => response.send('OAuth 2.0 Server');
 
 const loginForm = (request, response) => response.render('login');
-
+// TODO
 const login = passport.authenticate('local', { successReturnToOrRedirect: '/', failureRedirect: '/login' });
 
 const logout = (request, response) => {

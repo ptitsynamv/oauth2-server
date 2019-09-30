@@ -1,0 +1,20 @@
+<%- include('./includes/header') -%>
+
+<div class="form-wrap">
+	<form action="/login" method="post">
+		<div>
+			<label>Email:</label>
+			<input type="email" name="email" /><br/>
+		</div>
+		<div>
+			<label>Password:</label>
+			<input type="password" name="password" />
+		</div>
+		<div>
+			<input type="submit" value="Submit" />
+		</div>
+	</form>
+	<p><small>Hint - ptitsynamv@gmail.com : password</small></p>
+</div>
+
+<%- include('./includes/footer') -%>

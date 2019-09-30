@@ -1,11 +1,11 @@
 const oauth2orize = require('oauth2orize');
 const passport = require('passport');
 const login = require('connect-ensure-login');
-const db = require('../db');
 const utils = require('../utilities');
 const express = require('express');
 const keys = require('../config');
 const router = express.Router();
+const models = require('../models');
 
 const server = oauth2orize.createServer();
 
@@ -25,7 +25,8 @@ const server = oauth2orize.createServer();
 server.serializeClient((client, done) => done(null, client.id));
 
 server.deserializeClient((id, done) => {
-    db.clients.findById(id, (error, client) => {
+    console.log(22);
+    models.client.findById(id, (error, client) => {
         if (error) return done(error);
         return done(null, client);
     });
@@ -45,13 +46,13 @@ server.deserializeClient((id, done) => {
 // the application. The application issues a code, which is bound to these
 // values, and will be exchanged for an access token.
 
-server.grant(oauth2orize.grant.code((client, redirectUri, user, ares, done) => {
-    const code = utils.getUid(16);
-    db.authorizationCodes.save(code, client.id, redirectUri, user.id, user.username, (error) => {
-        if (error) return done(error);
-        return done(null, code);
-    });
-}));
+// server.grant(oauth2orize.grant.code((client, redirectUri, user, ares, done) => {
+//     const code = utils.getUid(16);
+//     db.authorizationCodes.save(code, client.id, redirectUri, user.id, user.username, (error) => {
+//         if (error) return done(error);
+//         return done(null, code);
+//     });
+// }));
 
 // Grant implicit authorization. The callback takes the `client` requesting
 // authorization, the authenticated `user` granting access, and
@@ -61,10 +62,17 @@ server.grant(oauth2orize.grant.code((client, redirectUri, user, ares, done) => {
 
 // TODO real expires_in
 server.grant(oauth2orize.grant.token((client, user, ares, done) => {
+    console.log(11);
+
     const token = utils.getUid(256);
-    db.accessTokens.save(token, user.id, client.clientId, (error) => {
+    const accessToken = new models.accessToken({
+        token,
+        userId: user.id,
+        clientId: client.clientId,
+    });
+    accessToken.save((error) => {
         if (error) return done(error);
-        return done(null, token, {expires_in: keys.security.tokenLife, state: 'state-mock'});
+        return done(null, token, {expires_in: keys.security.tokenLife, state: keys.security.state});
     });
 }));
 
@@ -76,6 +84,8 @@ server.grant(oauth2orize.grant.token((client, user, ares, done) => {
 // custom parameters by adding these to the `done()` call
 
 server.exchange(oauth2orize.exchange.code((client, code, redirectUri, done) => {
+    console.log(1);
+
     db.authorizationCodes.find(code, (error, authCode) => {
         if (error) return done(error);
         if (client.id !== authCode.clientId) return done(null, false);
@@ -99,6 +109,8 @@ server.exchange(oauth2orize.exchange.code((client, code, redirectUri, done) => {
 // application issues an access token on behalf of the user who authorized the code.
 
 server.exchange(oauth2orize.exchange.password((client, username, password, scope, done) => {
+    console.log(2);
+
     // Validate the client
     db.clients.findByClientId(client.clientId, (error, localClient) => {
         if (error) return done(error);
@@ -127,6 +139,7 @@ server.exchange(oauth2orize.exchange.password((client, username, password, scope
 // application issues an access token on behalf of the client who authorized the code.
 
 server.exchange(oauth2orize.exchange.clientCredentials((client, scope, done) => {
+    console.log(3);
     // Validate the client
     db.clients.findByClientId(client.clientId, (error, localClient) => {
         if (error) return done(error);
@@ -163,7 +176,7 @@ server.exchange(oauth2orize.exchange.clientCredentials((client, scope, done) => 
 const authorization = [
     login.ensureLoggedIn(),
     server.authorization((clientId, redirectUri, done) => {
-        db.clients.findByClientId(clientId, (error, client) => {
+        models.client.findOne({clientId}, (error, client) => {
             if (error) return done(error);
             // WARNING: For security purposes, it is highly advisable to check that
             //          redirectUri provided by the client matches one registered with
@@ -176,8 +189,7 @@ const authorization = [
 
         // Auto-approve
         if (client.isTrusted) return done(null, true);
-
-        db.accessTokens.findByUserIdAndClientId(user.id, client.clientId, (error, token) => {
+        models.accessToken.findOne({userId: user.id, clientId: client.clientId}, (error, token) => {
             // Auto-approve
             if (token) return done(null, true);
 
