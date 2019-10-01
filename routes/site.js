@@ -31,7 +31,7 @@ const registerUser = async (request, response) => {
     });
     try {
         await user.save();
-        return response.render('account',  {name: user.email})
+        return response.render('account', {name: user.email})
     } catch (error) {
         return response.render('register-user', {
             message: error,
@@ -51,7 +51,7 @@ const registerClient = async (request, response) => {
     const client = new models.client({name, clientId, clientSecret});
     try {
         await client.save();
-        return response.render('account',  {name: client.name})
+        return response.render('account', {name: client.name})
     } catch (error) {
         return response.render('register-client', {
             message: error,
@@ -72,6 +72,11 @@ const account = [
     },
 ];
 
+const info = async (request, response) => {
+    const clients = await models.client.find({}).select('name clientId clientSecret isTrusted').exec();
+    const users = await models.user.find({}).select('email').exec();
+    return response.render('info', {clients, users});
+};
 
 router.get('/', index);
 router.get('/login', loginForm);
@@ -82,5 +87,6 @@ router.post('/register-user', registerUser);
 router.get('/register-client', registerClientForm);
 router.post('/register-client', registerClient);
 router.get('/account', account);
+router.get('/info', info);
 
 module.exports = router;

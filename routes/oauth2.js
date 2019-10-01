@@ -25,7 +25,6 @@ const server = oauth2orize.createServer();
 server.serializeClient((client, done) => done(null, client.id));
 
 server.deserializeClient((id, done) => {
-    console.log(22);
     models.client.findById(id, (error, client) => {
         if (error) return done(error);
         return done(null, client);
@@ -92,8 +91,6 @@ server.grant(oauth2orize.grant.token((client, user, ares, done) => {
 // custom parameters by adding these to the `done()` call
 
 server.exchange(oauth2orize.exchange.code((client, code, redirectUri, done) => {
-    console.log(1);
-
     db.authorizationCodes.find(code, (error, authCode) => {
         if (error) return done(error);
         if (client.id !== authCode.clientId) return done(null, false);
@@ -117,8 +114,6 @@ server.exchange(oauth2orize.exchange.code((client, code, redirectUri, done) => {
 // application issues an access token on behalf of the user who authorized the code.
 
 server.exchange(oauth2orize.exchange.password((client, username, password, scope, done) => {
-    console.log(2);
-
     // Validate the client
     db.clients.findByClientId(client.clientId, (error, localClient) => {
         if (error) return done(error);
@@ -147,7 +142,6 @@ server.exchange(oauth2orize.exchange.password((client, username, password, scope
 // application issues an access token on behalf of the client who authorized the code.
 
 server.exchange(oauth2orize.exchange.clientCredentials((client, scope, done) => {
-    console.log(3);
     // Validate the client
     db.clients.findByClientId(client.clientId, (error, localClient) => {
         if (error) return done(error);

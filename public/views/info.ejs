@@ -1,0 +1,40 @@
+<%- include('./includes/header') -%>
+
+<div class="card">
+    <div class="card-header">
+        Users:
+    </div>
+    <ul class="list-group list-group-flush">
+        <% users.forEach(function(user){ %>
+        <li class="list-group-item"><%- user.email %></li>
+        <% }); %>
+    </ul>
+</div>
+<hr>
+<div class="card">
+    <div class="card-header">
+        Clients:
+    </div>
+    <table class="table">
+        <thead>
+        <tr>
+            <th scope="col">Name</th>
+            <th scope="col">ClientId</th>
+            <th scope="col">ClientSecret</th>
+            <th scope="col">isTrusted</th>
+        </tr>
+        </thead>
+        <tbody>
+        <% clients.forEach(function(client){ %>
+        <tr>
+            <td><%- client.name %></td>
+            <td><%- client.clientId %></td>
+            <td><%- client.clientSecret %></td>
+            <td><%- client.isTrusted ? 'Yes' : 'No' %></td>
+        </tr>
+        <% }); %>
+        </tbody>
+    </table>
+</div>
+
+<%- include('./includes/footer') -%>
