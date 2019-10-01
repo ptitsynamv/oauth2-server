@@ -1,20 +1,23 @@
 <%- include('./includes/header') -%>
 
-<div class="form-wrap">
-	<form action="/login" method="post">
-		<div>
-			<label>Email:</label>
-			<input type="email" name="email" /><br/>
-		</div>
-		<div>
-			<label>Password:</label>
-			<input type="password" name="password" />
-		</div>
-		<div>
-			<input type="submit" value="Submit" />
-		</div>
-	</form>
-	<p><small>Hint - ptitsynamv@gmail.com : password</small></p>
-</div>
+<h1>Login User Form</h1>
 
+<form action="/login" method="post">
+	<div class="form-group">
+		<label for="inputEmail">Email</label>
+		<input type="email" name="email"  class="form-control" id="inputEmail" placeholder="Enter email">
+	</div>
+	<div class="form-group">
+		<label for="inputPassword">Password</label>
+		<input type="password" name="password" class="form-control" id="inputPassword" placeholder="Password">
+	</div>
+	<button type="submit" class="btn btn-primary">Submit</button>
+
+    <p><small>Hint - ptitsynamv@gmail.com : password</small></p>
+
+    <% if (message) { %>
+    <small>Error: <%= message %>!</small>
+    <% } %>
+
+</form>
 <%- include('./includes/footer') -%>

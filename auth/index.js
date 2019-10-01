@@ -20,9 +20,9 @@ passport.use(new LocalStrategy(
     (email, password, done) => {
         models.user.findOne({email}, (error, user) => {
             if (error) return done(error);
-            if (!user) return done(null, false);
+            if (!user) return done(null, false, {message: 'user not fount'});
             const passwordResult = bcrypt.compareSync(password, user.password);
-            if (!passwordResult) return done(null, false);
+            if (!passwordResult) return done(null, false, {message: 'wrong compare'});
             return done(null, user, {scope: 'profile'});
         });
     }
