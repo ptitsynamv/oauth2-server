@@ -1,9 +1,11 @@
 const oauth2orize = require('oauth2orize');
 const passport = require('passport');
 const login = require('connect-ensure-login');
-const db = require('../db');
 const utils = require('../utilities');
-
+const express = require('express');
+const keys = require('../config');
+const router = express.Router();
+const models = require('../models');
 
 const server = oauth2orize.createServer();
 
@@ -23,7 +25,7 @@ const server = oauth2orize.createServer();
 server.serializeClient((client, done) => done(null, client.id));
 
 server.deserializeClient((id, done) => {
-    db.clients.findById(id, (error, client) => {
+    models.client.findById(id, (error, client) => {
         if (error) return done(error);
         return done(null, client);
     });
@@ -43,13 +45,13 @@ server.deserializeClient((id, done) => {
 // the application. The application issues a code, which is bound to these
 // values, and will be exchanged for an access token.
 
-server.grant(oauth2orize.grant.code((client, redirectUri, user, ares, done) => {
-    const code = utils.getUid(16);
-    db.authorizationCodes.save(code, client.id, redirectUri, user.id, user.username, (error) => {
-        if (error) return done(error);
-        return done(null, code);
-    });
-}));
+// server.grant(oauth2orize.grant.code((client, redirectUri, user, ares, done) => {
+//     const code = utils.getUid(16);
+//     db.authorizationCodes.save(code, client.id, redirectUri, user.id, user.username, (error) => {
+//         if (error) return done(error);
+//         return done(null, code);
+//     });
+// }));
 
 // Grant implicit authorization. The callback takes the `client` requesting
 // authorization, the authenticated `user` granting access, and
@@ -59,10 +61,26 @@ server.grant(oauth2orize.grant.code((client, redirectUri, user, ares, done) => {
 
 server.grant(oauth2orize.grant.token((client, user, ares, done) => {
     const token = utils.getUid(256);
-    db.accessTokens.save(token, user.id, client.clientId, (error) => {
-        if (error) return done(error);
-        return done(null, token);
-    });
+    models.accessToken.findOne(
+        {clientId: client.clientId, userId: user.id},
+        (error, accessToken) => {
+            if (error) return done(error);
+            if (!accessToken) {
+                new models.accessToken({
+                    token,
+                    userId: user.id,
+                    clientId: client.clientId,
+                }).save((error) => {
+                    if (error) return done(error);
+                });
+            } else {
+                accessToken.token = token;
+                accessToken.save((error) => {
+                    if (error) return done(error);
+                });
+            }
+            return done(null, token, {expires_in: keys.security.tokenLife, state: keys.security.state});
+        });
 }));
 
 // Exchange authorization codes for access tokens. The callback accepts the
@@ -80,9 +98,10 @@ server.exchange(oauth2orize.exchange.code((client, code, redirectUri, done) => {
 
         const token = utils.getUid(256);
         db.accessTokens.save(token, authCode.userId, authCode.clientId, (error) => {
+
             if (error) return done(error);
             // Add custom params, e.g. the username
-            let params = { username: authCode.userName };
+            let params = {username: authCode.userName};
             // Call `done(err, accessToken, [refreshToken], [params])` to issue an access token
             return done(null, token, null, params);
         });
@@ -108,6 +127,7 @@ server.exchange(oauth2orize.exchange.password((client, username, password, scope
             // Everything validated, return the token
             const token = utils.getUid(256);
             db.accessTokens.save(token, user.id, client.clientId, (error) => {
+
                 if (error) return done(error);
                 // Call `done(err, accessToken, [refreshToken], [params])`, see oauth2orize.exchange.code
                 return done(null, token);
@@ -155,10 +175,10 @@ server.exchange(oauth2orize.exchange.clientCredentials((client, scope, done) => 
 // authorization). We accomplish that here by routing through `ensureLoggedIn()`
 // first, and rendering the `dialog` view.
 
-module.exports.authorization = [
+const authorization = [
     login.ensureLoggedIn(),
     server.authorization((clientId, redirectUri, done) => {
-        db.clients.findByClientId(clientId, (error, client) => {
+        models.client.findOne({clientId}, (error, client) => {
             if (error) return done(error);
             // WARNING: For security purposes, it is highly advisable to check that
             //          redirectUri provided by the client matches one registered with
@@ -171,8 +191,7 @@ module.exports.authorization = [
 
         // Auto-approve
         if (client.isTrusted) return done(null, true);
-
-        db.accessTokens.findByUserIdAndClientId(user.id, client.clientId, (error, token) => {
+        models.accessToken.findOne({userId: user.id, clientId: client.clientId}, (error, token) => {
             // Auto-approve
             if (token) return done(null, true);
 
@@ -181,7 +200,11 @@ module.exports.authorization = [
         });
     }),
     (request, response) => {
-        response.render('dialog', { transactionId: request.oauth2.transactionID, user: request.user, client: request.oauth2.client });
+        response.render('dialog', {
+            transactionId: request.oauth2.transactionID,
+            user: request.user,
+            client: request.oauth2.client
+        });
     },
 ];
 
@@ -192,7 +215,7 @@ module.exports.authorization = [
 // client, the above grant middleware configured above will be invoked to send
 // a response.
 
-module.exports.decision = [
+const decision = [
     login.ensureLoggedIn(),
     server.decision(),
 ];
@@ -205,8 +228,68 @@ module.exports.decision = [
 // exchange middleware will be invoked to handle the request. Clients must
 // authenticate when making requests to this endpoint.
 
-module.exports.token = [
-    passport.authenticate(['basic', 'oauth2-client-password'], { session: false }),
+const token = [
+    passport.authenticate(['basic', 'oauth2-client-password'], {session: false}),
     server.token(),
     server.errorHandler(),
 ];
+
+const expect = {
+    "discoveryDocument": {
+        "issuer": "http://localhost:3001/oauth2",
+        "jwks_uri": "http://localhost:3001/oauth2/.well-known/jwks",
+        "authorization_endpoint": "http://localhost:3001/oauth2/authorize",
+        "token_endpoint": "http://localhost:3001/oauth2/token",
+        "userinfo_endpoint": "http://localhost:3001/oauth2/userinfo",
+        // "end_session_endpoint": "http://localhost:3001/oauth2/identity/connect/endsession",
+        // "check_session_iframe": "http://localhost:3001/oauth2/identity/connect/checksession",
+        // "revocation_endpoint": "http://localhost:3001/oauth2/identity/connect/revocation",
+        "scopes_supported": ["api"],
+        // "claims_supported": ["role", "projects", "buyInBulk", "sub", "name", "family_name", "given_name", "middle_name", "nickname", "preferred_username", "profile", "picture", "website", "gender", "birthdate", "zoneinfo", "locale", "updated_at", "email", "email_verified", "phone_number", "phone_number_verified", "address"],
+        "response_types_supported": ["token", "id_token"],
+        // "response_modes_supported": ["form_post", "query", "fragment"],
+        // "grant_types_supported": ["authorization_code", "client_credentials", "password", "refresh_token", "implicit"],
+        // "subject_types_supported": ["public"],
+        // "id_token_signing_alg_values_supported": ["RS256"],
+        // "token_endpoint_auth_methods_supported": ["client_secret_post", "client_secret_basic"]
+    },
+    "jwks": {
+        "keys": [{
+            "kty": "RSA",
+            "use": "sig",
+            "kid": "KGAhprLdiAK1kRTo3K24SIF59E4",
+            "x5t": "KGAhprLdiAK1kRTo3K24SIF59E4",
+            "e": "AQAB",
+            "n": "mock-n",
+            "x5c": ["mock-x5c"]
+        }]
+    }
+};
+
+const configuration = [
+    (request, response) => response.json(expect.discoveryDocument),
+];
+
+const jwks = [
+    (request, response) => response.json({}),
+];
+
+const info = [
+    passport.authenticate('bearer', {session: false}),
+    (request, response) => {
+        // request.authInfo is set using the `info` argument supplied by
+        // `BearerStrategy`. It is typically used to indicate scope of the token,
+        // and used in access control checks. For illustrative purposes, this
+        // example simply returns the scope in the response.
+        response.json({_id: request.user.id, email: request.user.email});
+    }
+];
+
+router.get('/authorize', authorization);
+router.post('/authorize/decision', decision);
+router.post('/token', token);
+router.get('/.well-known/openid-configuration', configuration);
+router.get('/.well-known/jwks', jwks);
+router.get('/userinfo', info);
+
+module.exports = router;

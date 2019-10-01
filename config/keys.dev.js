@@ -1,4 +1,3 @@
 module.exports = {
-    mongoUrl: 'mongodb://admin:admin1@ds135255.mlab.com:00000/dbname',
-    jwt: 'masha'
+    mongoUrl: 'mongodb://admin:admin1@ds127535.mlab.com:27535/oauth2',
 };

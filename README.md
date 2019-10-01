@@ -1,62 +1,41 @@
-# server 
+# Oauth2 server.
 
-MondoDB on mlab.com.
+## used MondoDB on mlab.com.
 
-http://localhost:3001/api-docs/ - documentation
-
+### bugs
 address already in use :::3000
 `lsof -wni tcp:3000`
-`kill {id}`
+`kill -9 {id}`
 
+### Для Oauth2:
+1. Клиент забирает configuration Oauth2 из
+get '/oauth2/.well-known/openid-configuration'
 
-Provider / Consumer Walkthrough
-===
+2. Редирект на роут авторизации (из configuration) - get '/oauth2/authorize?response_type=token&client_id={client_id}&state={state}&redirect_uri={redirect_uri}&scope={scope}'.
+ 
+3. login.ensureLoggedIn() - пользователь видит get '/login'.
+4. Вводит креды и отправляет на post '/login'.
+5. Используем local authenticate strategy (email, password). 
+6. Если все верно - server.authorization
+7. Если пользователь первый раз запрашивает креды через данного клиента, используем 'dialog' для подтверждения.
+8. Формируем новый токен на 'oauth2orize.grant.token'
+9. Редикерт на redirect_uri
 
-Interacting with this provider directly doesn't showcase it's oauth2 functionality.
-
-1. Visiting `/` takes you to a blank page... not too interesting
-2. `/login` will ask you for credentials.
-  * If you login before an oauth request you are taken directly to permission dialog when that request happens
-  * Otherwise you will be redirected here and then to the permission dialog
-3. `/account` will allow you to see your user details
-
-In order to demo what this is actually accomplishing you'll need to run a consumer.
-
-See <https://github.com/coolaj86/example-oauth2orize-consumer>
-
-API
-===
-
-Below is a mapping of the API in the context of a passport-strategy
-
-* `/dialog/authorize` is the `authorizationURL`.
-* `/oauth/token` is the `tokenURL`
-* `/api/userinfo` is a protected resource that requires user permission
-* `/api/clientinfo` is a protected resource that requires a token generated from the client's id and secret
-* Usage of `scope` is not demonstrated in this example.
-
-The standalone usable resources are
-
-* `GET /` nothing
-* `GET /login` lets you login, presented by `/dialog/authorize` if you haven't logged in
-* `POST /login` processes the login
-* `GET /logout` lets you logout
-* `GET /account` lets your view your user info
-
-And then some internal resources that are of no concern for standalone users or consumers
-
-* `POST /dialog/authorize/decision`, processes the allow / deny
-
-
-
-const authConfig: AuthConfig = {
-  redirectUri: window.location.origin + '/articles',
-  clientId: 'abc123',
-  responseType: 'token',
-  scope: 'api',
-  showDebugInformation: true,
-  oidc: false,
-  requireHttps: false,
-  issuer: 'http://localhost:3001',
-  loginUrl: 'http://localhost:3001/dialog/authorize',
-};
+### Angular 8 (angular-oauth2-oidc) config
+```
+    const authConfig: AuthConfig = {
+        redirectUri: window.location.origin + '/articles',
+        clientId: 'antropogenez-client-id',
+        showDebugInformation: true,
+        timeoutFactor: 0.8,
+        requireHttps: false,
+        issuer: environment.auth2Url + '/oauth2',
+        oidc: false,
+      };
+```
+```
+    oauthService.configure(authConfig);
+    oauthService.setupAutomaticSilentRefresh();
+    oauthService.tokenValidationHandler = new JwksValidationHandler();
+    oauthService.loadDiscoveryDocument();
+```
