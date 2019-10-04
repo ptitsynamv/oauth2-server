@@ -3,6 +3,12 @@
    <ul>
        <li><a href="/oauth2/authorize?response_type=code&client_id=antropogenez-client-id&redirect_uri=http://localhost:3001/test/authorization-code&scope=read
 ">Authorization Code</a></li>
+
+       <li><a href="/oauth2/authorize?response_type=token&client_id=antropogenez-client-id&redirect_uri=http://localhost:3001/test/implicit&scope=read
+">Implicit</a></li>
+
+       <li>Resource Owner Password Credentials</li>
+       <li>Client Credentials</li>
    </ul>
 
 <%- include('./includes/footer') -%>

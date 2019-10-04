@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const request = require('request');
+const url = require('url');
 
 const test = (request, response) => response.render('test');
 
@@ -25,8 +26,13 @@ const testAuthorizationCode = (req, res) => {
     })
 };
 
+const implicit = (req, res) => {
+    return  res.render('index');
+};
+
 router.get('/test', test);
 router.get('/test/authorization-code', testAuthorizationCode);
+router.get('/test/implicit', implicit);
 
 
 module.exports = router;

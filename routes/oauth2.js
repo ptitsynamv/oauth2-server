@@ -67,7 +67,6 @@ server.grant(oauth2orize.grant.code((client, redirectUri, user, ares, done) => {
 // values.
 
 server.grant(oauth2orize.grant.token((client, user, ares, done) => {
-    console.log(2);
     const token = utils.getUid(256);
     models.accessToken.findOne(
         {clientId: client.clientId, userId: user.id},
