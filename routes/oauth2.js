@@ -45,13 +45,20 @@ server.deserializeClient((id, done) => {
 // the application. The application issues a code, which is bound to these
 // values, and will be exchanged for an access token.
 
-// server.grant(oauth2orize.grant.code((client, redirectUri, user, ares, done) => {
-//     const code = utils.getUid(16);
-//     db.authorizationCodes.save(code, client.id, redirectUri, user.id, user.username, (error) => {
-//         if (error) return done(error);
-//         return done(null, code);
-//     });
-// }));
+server.grant(oauth2orize.grant.code((client, redirectUri, user, ares, done) => {
+    const code = utils.getUid(16);
+    new models.authorizationCode({
+        code,
+        clientId: client.id,
+        redirectUri,
+        userId: user.id,
+        userEmail: user.email,
+    })
+        .save((error) => {
+            if (error) return done(error);
+            return done(null, code);
+        });
+}));
 
 // Grant implicit authorization. The callback takes the `client` requesting
 // authorization, the authenticated `user` granting access, and
@@ -60,6 +67,7 @@ server.deserializeClient((id, done) => {
 // values.
 
 server.grant(oauth2orize.grant.token((client, user, ares, done) => {
+    console.log(2);
     const token = utils.getUid(256);
     models.accessToken.findOne(
         {clientId: client.clientId, userId: user.id},
@@ -91,20 +99,24 @@ server.grant(oauth2orize.grant.token((client, user, ares, done) => {
 // custom parameters by adding these to the `done()` call
 
 server.exchange(oauth2orize.exchange.code((client, code, redirectUri, done) => {
-    db.authorizationCodes.find(code, (error, authCode) => {
+    models.authorizationCode.findOne({code}, (error, authCode) => {
         if (error) return done(error);
         if (client.id !== authCode.clientId) return done(null, false);
         if (redirectUri !== authCode.redirectUri) return done(null, false);
 
         const token = utils.getUid(256);
-        db.accessTokens.save(token, authCode.userId, authCode.clientId, (error) => {
-
-            if (error) return done(error);
-            // Add custom params, e.g. the username
-            let params = {username: authCode.userName};
-            // Call `done(err, accessToken, [refreshToken], [params])` to issue an access token
-            return done(null, token, null, params);
-        });
+        new models.accessToken({
+            token,
+            userId: authCode.userId,
+            clientId: authCode.clientId,
+        })
+            .save((error) => {
+                if (error) return done(error);
+                // Add custom params, e.g. the username
+                // let params = {username: authCode.userName};
+                // Call `done(err, accessToken, [refreshToken], [params])` to issue an access token
+                return done(null, token);
+            });
     });
 }));
 
@@ -114,6 +126,8 @@ server.exchange(oauth2orize.exchange.code((client, code, redirectUri, done) => {
 // application issues an access token on behalf of the user who authorized the code.
 
 server.exchange(oauth2orize.exchange.password((client, username, password, scope, done) => {
+    console.log(4);
+
     // Validate the client
     db.clients.findByClientId(client.clientId, (error, localClient) => {
         if (error) return done(error);
@@ -142,6 +156,9 @@ server.exchange(oauth2orize.exchange.password((client, username, password, scope
 // application issues an access token on behalf of the client who authorized the code.
 
 server.exchange(oauth2orize.exchange.clientCredentials((client, scope, done) => {
+
+    console.log(5);
+
     // Validate the client
     db.clients.findByClientId(client.clientId, (error, localClient) => {
         if (error) return done(error);

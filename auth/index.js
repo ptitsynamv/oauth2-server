@@ -1,7 +1,7 @@
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
-// const BasicStrategy = require('passport-http').BasicStrategy;
-// const ClientPasswordStrategy = require('passport-oauth2-client-password').Strategy;
+const BasicStrategy = require('passport-http').BasicStrategy;
+const ClientPasswordStrategy = require('passport-oauth2-client-password').Strategy;
 const BearerStrategy = require('passport-http-bearer').Strategy;
 const models = require('../models');
 const bcrypt = require('bcryptjs');
@@ -43,21 +43,21 @@ passport.deserializeUser((id, done) => models.user.findById(id, (error, user) =>
  * to the `Authorization` header). While this approach is not recommended by
  * the specification, in practice it is quite common.
  */
-// function verifyClient(clientId, clientSecret, done) {
-//     console.log('verifyClient');
-//
-//     db.clients.findByClientId(clientId, (error, client) => {
-//         if (error) return done(error);
-//         if (!client) return done(null, false);
-//         if (client.clientSecret !== clientSecret) return done(null, false);
-//         return done(null, client);
-//     });
-// }
-//
-// passport.use(new BasicStrategy(verifyClient));
-//
-// passport.use(new ClientPasswordStrategy(verifyClient));
-//
+function verifyClient(clientId, clientSecret, done) {
+console.log('verifyClient', clientId, clientSecret)
+
+    models.client.findOne({clientId}, (error, client) => {
+        if (error) return done(error);
+        if (!client) return done(null, false);
+        if (client.clientSecret !== clientSecret) return done(null, false);
+        return done(null, client);
+    });
+}
+
+passport.use(new BasicStrategy(verifyClient));
+
+passport.use(new ClientPasswordStrategy(verifyClient));
+
 /**
  * BearerStrategy
  *

@@ -41,7 +41,7 @@ const authorizationCodeSchema = new Schema({
         type: String,
         required: true,
     },
-    userName: {
+    userEmail: {
         type: String,
         required: true,
     }

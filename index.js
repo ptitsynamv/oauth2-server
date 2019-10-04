@@ -34,6 +34,7 @@ app.use(passport.session());
 require('./auth');
 
 app.use('/', routes.site);
+app.use('/', routes.test);
 app.use('/oauth2', routes.oauth2);
 app.use(express.static(__dirname + '/public'));
 
