@@ -44,7 +44,7 @@ passport.deserializeUser((id, done) => models.user.findById(id, (error, user) =>
  * the specification, in practice it is quite common.
  */
 function verifyClient(clientId, clientSecret, done) {
-console.log('verifyClient', clientId, clientSecret)
+    console.log('verifyClient', clientId, clientSecret)
 
     models.client.findOne({clientId}, (error, client) => {
         if (error) return done(error);

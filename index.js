@@ -39,5 +39,5 @@ app.use('/oauth2', routes.oauth2);
 app.use(express.static(__dirname + '/public'));
 
 const port = process.env.PORT || 3001;
-app.listen(port, () => console.log(`server start on ${port}`));
+app.listen(port, () => console.log(`server start on http://localhost:${port}/`));
 

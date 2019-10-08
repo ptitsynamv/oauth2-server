@@ -125,21 +125,23 @@ server.exchange(oauth2orize.exchange.code((client, code, redirectUri, done) => {
 // application issues an access token on behalf of the user who authorized the code.
 
 server.exchange(oauth2orize.exchange.password((client, username, password, scope, done) => {
-    console.log(4);
 
-    // Validate the client
-    db.clients.findByClientId(client.clientId, (error, localClient) => {
+    models.client.findOne({clientId: client.clientId}, (error, localClient) => {
         if (error) return done(error);
         if (!localClient) return done(null, false);
         if (localClient.clientSecret !== client.clientSecret) return done(null, false);
         // Validate the user
-        db.users.findByUsername(username, (error, user) => {
+        models.user.findOne({email: username}, (error, user) => {
             if (error) return done(error);
             if (!user) return done(null, false);
             if (password !== user.password) return done(null, false);
             // Everything validated, return the token
             const token = utils.getUid(256);
-            db.accessTokens.save(token, user.id, client.clientId, (error) => {
+            new models.accessToken({
+                token,
+                userId: user.id,
+                clientId: client.clientId,
+            }).save((error) => {
 
                 if (error) return done(error);
                 // Call `done(err, accessToken, [refreshToken], [params])`, see oauth2orize.exchange.code
@@ -250,6 +252,11 @@ const token = [
     server.errorHandler(),
 ];
 
+const tokenGrantTypePassword = [
+    server.token(),
+    server.errorHandler(),
+];
+
 const expect = {
     "discoveryDocument": {
         "issuer": "http://localhost:3001/oauth2",
@@ -264,7 +271,7 @@ const expect = {
         // "claims_supported": ["role", "projects", "buyInBulk", "sub", "name", "family_name", "given_name", "middle_name", "nickname", "preferred_username", "profile", "picture", "website", "gender", "birthdate", "zoneinfo", "locale", "updated_at", "email", "email_verified", "phone_number", "phone_number_verified", "address"],
         "response_types_supported": ["token", "id_token"],
         // "response_modes_supported": ["form_post", "query", "fragment"],
-        // "grant_types_supported": ["authorization_code", "client_credentials", "password", "refresh_token", "implicit"],
+        "grant_types_supported": ["authorization_code", "client_credentials", "password", "refresh_token", "implicit"],
         // "subject_types_supported": ["public"],
         // "id_token_signing_alg_values_supported": ["RS256"],
         // "token_endpoint_auth_methods_supported": ["client_secret_post", "client_secret_basic"]
@@ -304,6 +311,7 @@ const info = [
 router.get('/authorize', authorization);
 router.post('/authorize/decision', decision);
 router.post('/token', token);
+router.post('/token-grant-type-password', tokenGrantTypePassword);
 router.get('/.well-known/openid-configuration', configuration);
 router.get('/.well-known/jwks', jwks);
 router.get('/userinfo', info);

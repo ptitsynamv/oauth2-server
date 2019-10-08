@@ -30,9 +30,30 @@ const implicit = (req, res) => {
     return  res.render('index');
 };
 
+
+const grantTypePassword = (req, res) => {
+    const username = 'username';
+    const password = 'password';
+    const client_id = 'antropogenez-client-id';
+    const grant_type = 'password';
+    const url = `http://localhost:3001/oauth2/token-grant-type-password`;
+
+    request.post(url, {
+        json: {
+            username,
+            password,
+            client_id,
+            grant_type,
+        }
+    }, (error, res, body) => {
+        console.log('body', body);
+    })
+};
+
+
 router.get('/test', test);
 router.get('/test/authorization-code', testAuthorizationCode);
 router.get('/test/implicit', implicit);
-
+router.get('/grant-type-password', grantTypePassword);
 
 module.exports = router;
