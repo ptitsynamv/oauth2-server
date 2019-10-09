@@ -6,6 +6,7 @@ const express = require('express');
 const keys = require('../config');
 const router = express.Router();
 const models = require('../models');
+const bcrypt = require('bcryptjs');
 
 const server = oauth2orize.createServer();
 
@@ -125,30 +126,27 @@ server.exchange(oauth2orize.exchange.code((client, code, redirectUri, done) => {
 // application issues an access token on behalf of the user who authorized the code.
 
 server.exchange(oauth2orize.exchange.password((client, username, password, scope, done) => {
+    const token = utils.getUid(256);
+    models.user.findOne({email: username}, function (err, user) {
+        if (err) {
+            return done(err);
+        }
+        if (!user) {
+            return done(null, false);
+        }
+        const passwordResult = bcrypt.compareSync(password, user.password);
+        if (!passwordResult) return done(null, false, {message: 'wrong compare'});
 
-    models.client.findOne({clientId: client.clientId}, (error, localClient) => {
-        if (error) return done(error);
-        if (!localClient) return done(null, false);
-        if (localClient.clientSecret !== client.clientSecret) return done(null, false);
-        // Validate the user
-        models.user.findOne({email: username}, (error, user) => {
+        new models.accessToken({
+            token,
+            userId: user.id,
+            clientId: client.clientId,
+        }).save((error) => {
             if (error) return done(error);
-            if (!user) return done(null, false);
-            if (password !== user.password) return done(null, false);
-            // Everything validated, return the token
-            const token = utils.getUid(256);
-            new models.accessToken({
-                token,
-                userId: user.id,
-                clientId: client.clientId,
-            }).save((error) => {
-
-                if (error) return done(error);
-                // Call `done(err, accessToken, [refreshToken], [params])`, see oauth2orize.exchange.code
-                return done(null, token);
-            });
+            // Call `done(err, accessToken, [refreshToken], [params])`, see oauth2orize.exchange.code
+            return done(null, token);
         });
-    });
+    })
 }));
 
 // Exchange the client id and password/secret for an access token. The callback accepts the
@@ -157,9 +155,6 @@ server.exchange(oauth2orize.exchange.password((client, username, password, scope
 // application issues an access token on behalf of the client who authorized the code.
 
 server.exchange(oauth2orize.exchange.clientCredentials((client, scope, done) => {
-
-    console.log(5);
-
     // Validate the client
     db.clients.findByClientId(client.clientId, (error, localClient) => {
         if (error) return done(error);
@@ -247,12 +242,7 @@ const decision = [
 // authenticate when making requests to this endpoint.
 
 const token = [
-    passport.authenticate(['basic', 'oauth2-client-password'], {session: false}),
-    server.token(),
-    server.errorHandler(),
-];
-
-const tokenGrantTypePassword = [
+    passport.authenticate(['basic', 'oauth2-client-password', 'oauth2-resource-owner-password'], {session: false}),
     server.token(),
     server.errorHandler(),
 ];
@@ -311,7 +301,6 @@ const info = [
 router.get('/authorize', authorization);
 router.post('/authorize/decision', decision);
 router.post('/token', token);
-router.post('/token-grant-type-password', tokenGrantTypePassword);
 router.get('/.well-known/openid-configuration', configuration);
 router.get('/.well-known/jwks', jwks);
 router.get('/userinfo', info);

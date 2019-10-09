@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const request = require('request');
-const url = require('url');
 
 const test = (request, response) => response.render('test');
 
@@ -32,11 +31,11 @@ const implicit = (req, res) => {
 
 
 const grantTypePassword = (req, res) => {
-    const username = 'username';
+    const username = 'ptitsynamv@gmail.com';
     const password = 'password';
     const client_id = 'antropogenez-client-id';
     const grant_type = 'password';
-    const url = `http://localhost:3001/oauth2/token-grant-type-password`;
+    const url = `http://localhost:3001/oauth2/token`;
 
     request.post(url, {
         json: {
@@ -46,7 +45,8 @@ const grantTypePassword = (req, res) => {
             grant_type,
         }
     }, (error, res, body) => {
-        console.log('body', body);
+        const {access_token, token_type} = body;
+        console.log('grantTypePassword access_token and token_type', access_token, token_type);
     })
 };
 
