@@ -1,8 +1,9 @@
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
-// const BasicStrategy = require('passport-http').BasicStrategy;
-// const ClientPasswordStrategy = require('passport-oauth2-client-password').Strategy;
+const BasicStrategy = require('passport-http').BasicStrategy;
+const ClientPasswordStrategy = require('passport-oauth2-client-password').Strategy;
 const BearerStrategy = require('passport-http-bearer').Strategy;
+const ResourceOwnerPasswordStrategy = require('passport-oauth2-resource-owner-password').Strategy;
 const models = require('../models');
 const bcrypt = require('bcryptjs');
 
@@ -43,21 +44,19 @@ passport.deserializeUser((id, done) => models.user.findById(id, (error, user) =>
  * to the `Authorization` header). While this approach is not recommended by
  * the specification, in practice it is quite common.
  */
-// function verifyClient(clientId, clientSecret, done) {
-//     console.log('verifyClient');
-//
-//     db.clients.findByClientId(clientId, (error, client) => {
-//         if (error) return done(error);
-//         if (!client) return done(null, false);
-//         if (client.clientSecret !== clientSecret) return done(null, false);
-//         return done(null, client);
-//     });
-// }
-//
-// passport.use(new BasicStrategy(verifyClient));
-//
-// passport.use(new ClientPasswordStrategy(verifyClient));
-//
+function verifyClient(clientId, clientSecret, done) {
+    models.client.findOne({clientId}, (error, client) => {
+        if (error) return done(error);
+        if (!client) return done(null, false);
+        if (client.clientSecret !== clientSecret) return done(null, false);
+        return done(null, client);
+    });
+}
+
+passport.use(new BasicStrategy(verifyClient));
+
+passport.use(new ClientPasswordStrategy(verifyClient));
+
 /**
  * BearerStrategy
  *
@@ -79,6 +78,35 @@ passport.use(new BearerStrategy(
                 // and this is just for illustrative purposes.
                 done(null, user, {scope: '*'});
             });
+        });
+    }
+));
+
+passport.use(new ResourceOwnerPasswordStrategy(
+    (clientId, clientSecret, username, password, done) => {
+        models.client.findOne({clientId: clientId}, function (err, client) {
+            // this strategy does not require clientSecret as it is intended to be used in cases
+            // (such as mobile apps) which are inherintly insecure
+
+            if (err) {
+                return done(err);
+            }
+            if (!client) {
+                return done(null, false);
+            }
+
+            models.user.findOne({email: username}, function (err, user) {
+                if (err) {
+                    return done(err);
+                }
+                if (!user) {
+                    return done(null, false);
+                }
+                const passwordResult = bcrypt.compareSync(password, user.password);
+                if (!passwordResult) return done(null, false, {message: 'wrong compare'});
+                // return done(null, {client: client, user: user});
+                return done(null, client, {scope: '*'});
+            })
         });
     }
 ));

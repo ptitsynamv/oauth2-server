@@ -6,6 +6,7 @@ const express = require('express');
 const keys = require('../config');
 const router = express.Router();
 const models = require('../models');
+const bcrypt = require('bcryptjs');
 
 const server = oauth2orize.createServer();
 
@@ -45,13 +46,20 @@ server.deserializeClient((id, done) => {
 // the application. The application issues a code, which is bound to these
 // values, and will be exchanged for an access token.
 
-// server.grant(oauth2orize.grant.code((client, redirectUri, user, ares, done) => {
-//     const code = utils.getUid(16);
-//     db.authorizationCodes.save(code, client.id, redirectUri, user.id, user.username, (error) => {
-//         if (error) return done(error);
-//         return done(null, code);
-//     });
-// }));
+server.grant(oauth2orize.grant.code((client, redirectUri, user, ares, done) => {
+    const code = utils.getUid(16);
+    new models.authorizationCode({
+        code,
+        clientId: client.id,
+        redirectUri,
+        userId: user.id,
+        userEmail: user.email,
+    })
+        .save((error) => {
+            if (error) return done(error);
+            return done(null, code);
+        });
+}));
 
 // Grant implicit authorization. The callback takes the `client` requesting
 // authorization, the authenticated `user` granting access, and
@@ -91,20 +99,24 @@ server.grant(oauth2orize.grant.token((client, user, ares, done) => {
 // custom parameters by adding these to the `done()` call
 
 server.exchange(oauth2orize.exchange.code((client, code, redirectUri, done) => {
-    db.authorizationCodes.find(code, (error, authCode) => {
+    models.authorizationCode.findOne({code}, (error, authCode) => {
         if (error) return done(error);
         if (client.id !== authCode.clientId) return done(null, false);
         if (redirectUri !== authCode.redirectUri) return done(null, false);
 
         const token = utils.getUid(256);
-        db.accessTokens.save(token, authCode.userId, authCode.clientId, (error) => {
-
-            if (error) return done(error);
-            // Add custom params, e.g. the username
-            let params = {username: authCode.userName};
-            // Call `done(err, accessToken, [refreshToken], [params])` to issue an access token
-            return done(null, token, null, params);
-        });
+        new models.accessToken({
+            token,
+            userId: authCode.userId,
+            clientId: authCode.clientId,
+        })
+            .save((error) => {
+                if (error) return done(error);
+                // Add custom params, e.g. the username
+                // let params = {username: authCode.userName};
+                // Call `done(err, accessToken, [refreshToken], [params])` to issue an access token
+                return done(null, token);
+            });
     });
 }));
 
@@ -114,26 +126,27 @@ server.exchange(oauth2orize.exchange.code((client, code, redirectUri, done) => {
 // application issues an access token on behalf of the user who authorized the code.
 
 server.exchange(oauth2orize.exchange.password((client, username, password, scope, done) => {
-    // Validate the client
-    db.clients.findByClientId(client.clientId, (error, localClient) => {
-        if (error) return done(error);
-        if (!localClient) return done(null, false);
-        if (localClient.clientSecret !== client.clientSecret) return done(null, false);
-        // Validate the user
-        db.users.findByUsername(username, (error, user) => {
-            if (error) return done(error);
-            if (!user) return done(null, false);
-            if (password !== user.password) return done(null, false);
-            // Everything validated, return the token
-            const token = utils.getUid(256);
-            db.accessTokens.save(token, user.id, client.clientId, (error) => {
+    const token = utils.getUid(256);
+    models.user.findOne({email: username}, function (err, user) {
+        if (err) {
+            return done(err);
+        }
+        if (!user) {
+            return done(null, false);
+        }
+        const passwordResult = bcrypt.compareSync(password, user.password);
+        if (!passwordResult) return done(null, false, {message: 'wrong compare'});
 
-                if (error) return done(error);
-                // Call `done(err, accessToken, [refreshToken], [params])`, see oauth2orize.exchange.code
-                return done(null, token);
-            });
+        new models.accessToken({
+            token,
+            userId: user.id,
+            clientId: client.clientId,
+        }).save((error) => {
+            if (error) return done(error);
+            // Call `done(err, accessToken, [refreshToken], [params])`, see oauth2orize.exchange.code
+            return done(null, token);
         });
-    });
+    })
 }));
 
 // Exchange the client id and password/secret for an access token. The callback accepts the
@@ -142,15 +155,18 @@ server.exchange(oauth2orize.exchange.password((client, username, password, scope
 // application issues an access token on behalf of the client who authorized the code.
 
 server.exchange(oauth2orize.exchange.clientCredentials((client, scope, done) => {
-    // Validate the client
-    db.clients.findByClientId(client.clientId, (error, localClient) => {
+    models.client.findOne({clientId: client.clientId}, (error, localClient) => {
         if (error) return done(error);
         if (!localClient) return done(null, false);
         if (localClient.clientSecret !== client.clientSecret) return done(null, false);
         // Everything validated, return the token
         const token = utils.getUid(256);
         // Pass in a null for user id since there is no user with this grant type
-        db.accessTokens.save(token, null, client.clientId, (error) => {
+        new models.accessToken({
+            token,
+            userId: null,
+            clientId: client.clientId,
+        }).save((error) => {
             if (error) return done(error);
             // Call `done(err, accessToken, [refreshToken], [params])`, see oauth2orize.exchange.code
             return done(null, token);
@@ -229,7 +245,7 @@ const decision = [
 // authenticate when making requests to this endpoint.
 
 const token = [
-    passport.authenticate(['basic', 'oauth2-client-password'], {session: false}),
+    passport.authenticate(['basic', 'oauth2-client-password', 'oauth2-resource-owner-password'], {session: false}),
     server.token(),
     server.errorHandler(),
 ];
@@ -248,7 +264,7 @@ const expect = {
         // "claims_supported": ["role", "projects", "buyInBulk", "sub", "name", "family_name", "given_name", "middle_name", "nickname", "preferred_username", "profile", "picture", "website", "gender", "birthdate", "zoneinfo", "locale", "updated_at", "email", "email_verified", "phone_number", "phone_number_verified", "address"],
         "response_types_supported": ["token", "id_token"],
         // "response_modes_supported": ["form_post", "query", "fragment"],
-        // "grant_types_supported": ["authorization_code", "client_credentials", "password", "refresh_token", "implicit"],
+        "grant_types_supported": ["authorization_code", "client_credentials", "password", "refresh_token", "implicit"],
         // "subject_types_supported": ["public"],
         // "id_token_signing_alg_values_supported": ["RS256"],
         // "token_endpoint_auth_methods_supported": ["client_secret_post", "client_secret_basic"]
