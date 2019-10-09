@@ -155,15 +155,18 @@ server.exchange(oauth2orize.exchange.password((client, username, password, scope
 // application issues an access token on behalf of the client who authorized the code.
 
 server.exchange(oauth2orize.exchange.clientCredentials((client, scope, done) => {
-    // Validate the client
-    db.clients.findByClientId(client.clientId, (error, localClient) => {
+    models.client.findOne({clientId: client.clientId}, (error, localClient) => {
         if (error) return done(error);
         if (!localClient) return done(null, false);
         if (localClient.clientSecret !== client.clientSecret) return done(null, false);
         // Everything validated, return the token
         const token = utils.getUid(256);
         // Pass in a null for user id since there is no user with this grant type
-        db.accessTokens.save(token, null, client.clientId, (error) => {
+        new models.accessToken({
+            token,
+            userId: null,
+            clientId: client.clientId,
+        }).save((error) => {
             if (error) return done(error);
             // Call `done(err, accessToken, [refreshToken], [params])`, see oauth2orize.exchange.code
             return done(null, token);

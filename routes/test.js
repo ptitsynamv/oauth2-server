@@ -19,14 +19,14 @@ const testAuthorizationCode = (req, res) => {
             code,
             redirect_uri
         }
-    }, (error, res, body) => {
+    }, (error, resp, body) => {
         const {access_token, token_type} = body;
-        console.log('testAuthorizationCode access_token and token_type', access_token, token_type);
+        return res.render('test-result', {access_token, token_type});
     })
 };
 
 const implicit = (req, res) => {
-    return  res.render('index');
+    return res.render('index');
 };
 
 
@@ -44,9 +44,27 @@ const grantTypePassword = (req, res) => {
             client_id,
             grant_type,
         }
-    }, (error, res, body) => {
+    }, (error, resp, body) => {
         const {access_token, token_type} = body;
-        console.log('grantTypePassword access_token and token_type', access_token, token_type);
+        return res.render('test-result', {access_token, token_type});
+    })
+};
+
+const clientCredentials = (req, res) => {
+    const client_id = 'antropogenez-client-id';
+    const client_secret = 'ssh-secret';
+    const grant_type = 'client_credentials';
+    const url = `http://localhost:3001/oauth2/token`;
+
+    request.post(url, {
+        json: {
+            client_id,
+            client_secret,
+            grant_type,
+        }
+    }, (error, resp, body) => {
+        const {access_token, token_type} = body;
+        return res.render('test-result', {access_token, token_type});
     })
 };
 
@@ -54,6 +72,7 @@ const grantTypePassword = (req, res) => {
 router.get('/test', test);
 router.get('/test/authorization-code', testAuthorizationCode);
 router.get('/test/implicit', implicit);
-router.get('/grant-type-password', grantTypePassword);
+router.get('/test/grant-type-password', grantTypePassword);
+router.get('/test/client-credentials', clientCredentials);
 
 module.exports = router;
