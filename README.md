@@ -42,5 +42,6 @@ get '/oauth2/.well-known/openid-configuration'
 ## Docker
 1. run `yarn docker:build`
 2. run `yarn docker:run`
-
 See your project on http://localhost:8001/
+3. run `yarn docker:push` to push your image to Docker Hub
+
