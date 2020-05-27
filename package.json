@@ -7,7 +7,11 @@
   "license": "MIT",
   "scripts": {
     "server": "node index",
-    "start": "nodemon index"
+    "start": "nodemon index",
+    "docker:build": "docker build --tag oauth2-server:latest .",
+    "docker:run": "docker run --publish 8001:3001 --detach --name oauth2 oauth2-server:latest",
+    "docker:show": "docker ps --all",
+    "docker:delete": "docker rm --force oauth2"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
