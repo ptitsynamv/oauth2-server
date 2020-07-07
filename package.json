@@ -13,7 +13,7 @@
     "docker:run": "docker run --publish 8001:3001 --detach --name oauth2 oauth2-server:latest",
     "docker:push": "docker push ptitsynamv/oauth2-server:latest",
     "docker:show": "docker ps --all",
-    "docker:delete": "docker rm --force oauth2",
+    "docker:delete": "docker rm --force oauth2"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
