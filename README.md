@@ -1,5 +1,9 @@
 # Oauth2 server.
 
+## Installation
+1. `yarn`.
+2. Install git hooks: `./scripts/install-hooks.bash`.  (To skip pre-commit hook: `git commit --no-verify -m "description"`)
+
 ## Used MondoDB on mlab.com.
 
 ## Bugs
@@ -40,8 +44,10 @@ get '/oauth2/.well-known/openid-configuration'
     oauthService.loadDiscoveryDocument();
 ```
 ## Docker
+You may need run `sudo chmod 666 /var/run/docker.sock`
 1. run `yarn docker:build`
 2. run `yarn docker:run`
 See your project on http://localhost:8001/
-3. run `yarn docker:push` to push your image to Docker Hub
+3. `yarn docker:tag`.
+4. `yarn docker:push` to push your image to Docker Hub
 

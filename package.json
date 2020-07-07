@@ -8,6 +8,7 @@
   "scripts": {
     "server": "node index",
     "start": "nodemon index",
+    "docker:tag": "docker tag oauth2-server:latest ptitsynamv/oauth2-server",
     "docker:build": "docker build --tag oauth2-server:latest .",
     "docker:run": "docker run --publish 8001:3001 --detach --name oauth2 oauth2-server:latest",
     "docker:push": "docker push ptitsynamv/oauth2-server:latest",
