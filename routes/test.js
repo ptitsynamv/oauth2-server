@@ -2,15 +2,18 @@ const express = require('express');
 const router = express.Router();
 const request = require('request');
 
-const test = (request, response) => response.render('test');
+const test = (request, response) => response.render('test', {
+    frontendOauth2ProjectUrl: process.env.FRONTEND_OAUTH2_PROJECT_URL,
+});
 
 const testAuthorizationCode = (req, res) => {
     const client_id = 'antropogenez-client-id';
     const client_secret = 'ssh-secret';
     const code = req.query.code;
-    const redirect_uri = `http://localhost:3001/test/authorization-code`;
+    console.log('')
+    const redirect_uri = `${process.env.DEPLOY_URL}test/authorization-code`;
     const grant_type = 'authorization_code';
-    const url = 'http://localhost:3001/oauth2/token';
+    const url = `${process.env.DEPLOY_URL}oauth2/token`;
     request.post(url, {
         json: {
             client_id,
@@ -35,7 +38,7 @@ const grantTypePassword = (req, res) => {
     const password = 'password';
     const client_id = 'antropogenez-client-id';
     const grant_type = 'password';
-    const url = `http://localhost:3001/oauth2/token`;
+    const url = `${process.env.DEPLOY_URL}oauth2/token`;
 
     request.post(url, {
         json: {
@@ -54,7 +57,7 @@ const clientCredentials = (req, res) => {
     const client_id = 'antropogenez-client-id';
     const client_secret = 'ssh-secret';
     const grant_type = 'client_credentials';
-    const url = `http://localhost:3001/oauth2/token`;
+    const url = `${process.env.DEPLOY_URL}oauth2/token`;
 
     request.post(url, {
         json: {

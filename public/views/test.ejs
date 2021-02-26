@@ -1,10 +1,10 @@
 <%- include('./includes/header') -%>
 
    <ul>
-       <li><a href="/oauth2/authorize?response_type=code&client_id=antropogenez-client-id&redirect_uri=http://localhost:3001/test/authorization-code&scope=read
+       <li><a href="/oauth2/authorize?response_type=code&client_id=antropogenez-client-id&redirect_uri=<%= frontendOauth2ProjectUrl %>test/authorization-code&scope=read
 ">Authorization Code</a></li>
 
-       <li><a href="/oauth2/authorize?response_type=token&client_id=antropogenez-client-id&redirect_uri=http://localhost:3001/test/implicit&scope=read
+       <li><a href="/oauth2/authorize?response_type=token&client_id=antropogenez-client-id&redirect_uri=<%= frontendOauth2ProjectUrl %>test/implicit&scope=read
 ">Implicit</a></li>
 
        <li><a href="/test/grant-type-password">Resource Owner Password Credentials</a></li>
