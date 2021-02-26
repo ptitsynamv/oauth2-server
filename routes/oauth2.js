@@ -254,11 +254,11 @@ const token = [
 
 const expect = {
     'discoveryDocument': {
-        'issuer': 'http://localhost:3001/oauth2',
-        'jwks_uri': 'http://localhost:3001/oauth2/.well-known/jwks',
-        'authorization_endpoint': 'http://localhost:3001/oauth2/authorize',
-        'token_endpoint': 'http://localhost:3001/oauth2/token',
-        'userinfo_endpoint': 'http://localhost:3001/oauth2/userinfo',
+        'issuer': `${process.env.DEPLOY_URL}oauth2`,
+        'jwks_uri': `${process.env.DEPLOY_URL}oauth2/.well-known/jwks`,
+        'authorization_endpoint': `${process.env.DEPLOY_URL}oauth2/authorize`,
+        'token_endpoint': `${process.env.DEPLOY_URL}oauth2/token`,
+        'userinfo_endpoint': `${process.env.DEPLOY_URL}oauth2/userinfo`,
         // "end_session_endpoint": "http://localhost:3001/oauth2/identity/connect/endsession",
         // "check_session_iframe": "http://localhost:3001/oauth2/identity/connect/checksession",
         // "revocation_endpoint": "http://localhost:3001/oauth2/identity/connect/revocation",
