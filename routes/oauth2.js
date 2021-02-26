@@ -3,7 +3,6 @@ const passport = require('passport');
 const login = require('connect-ensure-login');
 const utils = require('../utilities');
 const express = require('express');
-const keys = require('../config');
 const router = express.Router();
 const models = require('../models');
 const bcrypt = require('bcryptjs');
@@ -87,7 +86,10 @@ server.grant(oauth2orize.grant.token((client, user, ares, done) => {
                     if (error) return done(error);
                 });
             }
-            return done(null, token, {expires_in: keys.security.tokenLife, state: keys.security.state});
+            return done(null, token, {
+                expires_in: process.env.TOKEN_LIFE,
+                state: process.env.SECURITY_STATE,
+            });
         });
 }));
 
@@ -251,33 +253,33 @@ const token = [
 ];
 
 const expect = {
-    "discoveryDocument": {
-        "issuer": "http://localhost:3001/oauth2",
-        "jwks_uri": "http://localhost:3001/oauth2/.well-known/jwks",
-        "authorization_endpoint": "http://localhost:3001/oauth2/authorize",
-        "token_endpoint": "http://localhost:3001/oauth2/token",
-        "userinfo_endpoint": "http://localhost:3001/oauth2/userinfo",
+    'discoveryDocument': {
+        'issuer': 'http://localhost:3001/oauth2',
+        'jwks_uri': 'http://localhost:3001/oauth2/.well-known/jwks',
+        'authorization_endpoint': 'http://localhost:3001/oauth2/authorize',
+        'token_endpoint': 'http://localhost:3001/oauth2/token',
+        'userinfo_endpoint': 'http://localhost:3001/oauth2/userinfo',
         // "end_session_endpoint": "http://localhost:3001/oauth2/identity/connect/endsession",
         // "check_session_iframe": "http://localhost:3001/oauth2/identity/connect/checksession",
         // "revocation_endpoint": "http://localhost:3001/oauth2/identity/connect/revocation",
-        "scopes_supported": ["api"],
+        'scopes_supported': ['api'],
         // "claims_supported": ["role", "projects", "buyInBulk", "sub", "name", "family_name", "given_name", "middle_name", "nickname", "preferred_username", "profile", "picture", "website", "gender", "birthdate", "zoneinfo", "locale", "updated_at", "email", "email_verified", "phone_number", "phone_number_verified", "address"],
-        "response_types_supported": ["token", "id_token"],
+        'response_types_supported': ['token', 'id_token'],
         // "response_modes_supported": ["form_post", "query", "fragment"],
-        "grant_types_supported": ["authorization_code", "client_credentials", "password", "refresh_token", "implicit"],
+        'grant_types_supported': ['authorization_code', 'client_credentials', 'password', 'refresh_token', 'implicit'],
         // "subject_types_supported": ["public"],
         // "id_token_signing_alg_values_supported": ["RS256"],
         // "token_endpoint_auth_methods_supported": ["client_secret_post", "client_secret_basic"]
     },
-    "jwks": {
-        "keys": [{
-            "kty": "RSA",
-            "use": "sig",
-            "kid": "KGAhprLdiAK1kRTo3K24SIF59E4",
-            "x5t": "KGAhprLdiAK1kRTo3K24SIF59E4",
-            "e": "AQAB",
-            "n": "mock-n",
-            "x5c": ["mock-x5c"]
+    'jwks': {
+        'keys': [{
+            'kty': 'RSA',
+            'use': 'sig',
+            'kid': 'KGAhprLdiAK1kRTo3K24SIF59E4',
+            'x5t': 'KGAhprLdiAK1kRTo3K24SIF59E4',
+            'e': 'AQAB',
+            'n': 'mock-n',
+            'x5c': ['mock-x5c']
         }]
     }
 };

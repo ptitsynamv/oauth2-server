@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
@@ -8,10 +10,9 @@ const path = require('path');
 const ejs = require('ejs');
 const session = require('express-session');
 const mongoose = require('mongoose');
-const keys = require('./config');
 
 const app = express();
-mongoose.connect(keys.mongoUrl, {
+mongoose.connect(process.env.MONGO_URL, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     useCreateIndex: true,
@@ -38,6 +39,6 @@ app.use('/', routes.test);
 app.use('/oauth2', routes.oauth2);
 app.use(express.static(__dirname + '/public'));
 
-const port = process.env.PORT || 3001;
+const port = process.env.PORT;
 app.listen(port, () => console.log(`server start on http://localhost:${port}/`));
 
