@@ -259,6 +259,7 @@ const expect = {
         'authorization_endpoint': `${process.env.DEPLOY_URL}oauth2/authorize`,
         'token_endpoint': `${process.env.DEPLOY_URL}oauth2/token`,
         'userinfo_endpoint': `${process.env.DEPLOY_URL}oauth2/userinfo`,
+        'user_role': `${process.env.DEPLOY_URL}oauth2/user-role`,
         // "end_session_endpoint": "http://localhost:3001/oauth2/identity/connect/endsession",
         // "check_session_iframe": "http://localhost:3001/oauth2/identity/connect/checksession",
         // "revocation_endpoint": "http://localhost:3001/oauth2/identity/connect/revocation",
@@ -303,11 +304,22 @@ const info = [
     }
 ];
 
+const role = [
+    passport.authenticate('bearer', {session: false}),
+    (request, response) => {
+        if (request.user.email === process.env.ADMIN_EMAIL) {
+            return response.send('admin');
+        }
+        return response.send('guest');
+    }
+];
+
 router.get('/authorize', authorization);
 router.post('/authorize/decision', decision);
 router.post('/token', token);
 router.get('/.well-known/openid-configuration', configuration);
 router.get('/.well-known/jwks', jwks);
 router.get('/userinfo', info);
+router.get('/user-role', role);
 
 module.exports = router;
