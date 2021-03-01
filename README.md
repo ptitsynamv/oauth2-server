@@ -2,6 +2,7 @@
 
 ## Installation
 1. `npm install`.
+2. `npm start`.
 
 ## Bugs
 address already in use :::3000
@@ -25,4 +26,5 @@ get '/oauth2/.well-known/openid-configuration'
 ## Angular 8 (angular-oauth2-oidc) config
 ```clientId: 'antropogenez-client-id'```
 
-## 
+## Server deploy
+1. With pm2: `pm2 start index.js`
