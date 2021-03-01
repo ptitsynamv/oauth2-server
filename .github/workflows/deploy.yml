@@ -16,7 +16,7 @@ jobs:
           METHOD: sftp
           PORT: 22
           LOCAL_DIR: '.'
-          REMOTE_DIR: 'var/oauth2-server'
+          REMOTE_DIR: 'var/projects/oauth2-server'
           ARGS: --verbose
       - name: executing remote ssh commands using password
         uses: appleboy/ssh-action@master
@@ -26,6 +26,6 @@ jobs:
           password: ${{ secrets.SFTP_PASSWORD }}
           port: ${{ secrets.SFTP_PORT }}
           script: |
-            cd /var/oauth2-server
+            cd /var/projects/oauth2-server
             npm install
-            pm2 restart index.js
+            pm2 restart oauth2-server

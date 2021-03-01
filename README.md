@@ -27,4 +27,4 @@ get '/oauth2/.well-known/openid-configuration'
 ```clientId: 'antropogenez-client-id'```
 
 ## Server deploy
-1. With pm2: `pm2 start index.js`
+1. With pm2: `pm2 start index.js --name oauth2-server`.
