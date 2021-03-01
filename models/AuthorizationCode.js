@@ -47,4 +47,4 @@ const authorizationCodeSchema = new Schema({
     }
 });
 
-module.exports = mongoose.model('authorizationCode', authorizationCodeSchema);
+module.exports = mongoose.model('oauth2-authorization-codes', authorizationCodeSchema);
