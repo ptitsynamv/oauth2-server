@@ -28,4 +28,4 @@ jobs:
           script: |
             cd /var/projects/oauth2-server
             npm install
-            pm2 restart oauth2-server
+            pm2 stop oauth2-server; pm2 delete oauth2-server; pm2 start index.js --name oauth2-server

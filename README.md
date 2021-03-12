@@ -1,8 +1,11 @@
 # Oauth2 server.
 
 ## Installation
-1. `npm install`.
-2. `npm start`.
+1. Run `npm install`.
+2. Add values in .env file.
+
+## Develop
+1. Run `npm start`
 
 ## Bugs
 address already in use :::3000
@@ -26,5 +29,8 @@ get '/oauth2/.well-known/openid-configuration'
 ## Angular 8 (angular-oauth2-oidc) config
 ```clientId: 'antropogenez-client-id'```
 
-## Server deploy
+
+## Deploy
 1. With pm2: `pm2 start index.js --name oauth2-server`.
+
+Open http://ptitsynamv.1gb.ua:3002/
