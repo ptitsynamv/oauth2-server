@@ -7,6 +7,9 @@ jobs:
     name: Deploy to server
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
       - name: Send files to server
         uses: SamKirkland/FTP-Deploy-Action@2.0.0
         env:
@@ -17,7 +20,8 @@ jobs:
           PORT: 22
           LOCAL_DIR: '.'
           REMOTE_DIR: '/var/projects/oauth2-server'
-          ARGS: --verbose
+          ARGS: --verbose --delete --exclude-glob=.git*/** --exclude=.env --exclude-glob=node_modules/**
+
       - name: executing remote ssh commands using password
         uses: appleboy/ssh-action@master
         with:
