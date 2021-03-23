@@ -37,20 +37,20 @@ address already in use :::3000
 ## Deploy
 
 1. With pm2: `pm2 start index.js --name oauth2-server`.
+2. For logs: `pm2 logs`.
 
-Open http://ptitsynamv.1gb.ua:3002/
+Open http://ptitsynamv.1gb.ua/oauth2
 
 ## Deploy with Apache2
 
-1. Install Apache in your server. Rename the file "example.oauth2-server.conf" to "oauth2-server.conf", edit it and add to
-   /etc/apache2/sites-available
+1. Install Apache in your server. Rename the file "example.oauth2-server.conf" to "oauth2-server.conf", edit it and add to "/etc/apache2/sites-available".
 2. Allow Apache settings for backend application proxy:   
-   `a2enmod proxy`
-   `a2enmod proxy_http`
-   `a2enmod proxy_ajp`
-   `a2enmod proxy_balancer`
-   `a2enmod proxy_connect`
-   `a2enmod proxy_html`
+  - `a2enmod proxy`
+  - `a2enmod proxy_http`
+  - `a2enmod proxy_ajp`
+  - `a2enmod proxy_balancer`
+  - `a2enmod proxy_connect`
+  - `a2enmod proxy_html`
 3. Deactivate default file `a2dissite 000-default.conf`
 4. Activate file `a2ensite oauth2-server.conf`.
 5. Check config file `apache2ctl configtest`.
